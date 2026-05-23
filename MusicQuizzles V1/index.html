@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>MusicQuizzles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--surface:#111118;--s2:#1a1a24;--s3:#222230;
+  --accent:#A238FF;--green:#1DB954;--yellow:#f0c040;--red:#ff6b35;
+  --text:#f0f0f5;--muted:#888899;--border:rgba(255,255,255,0.08);
+  --r:12px;--fh:'Bebas Neue',sans-serif;--fb:'DM Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;overflow-x:hidden}
+#app{max-width:700px;margin:0 auto;padding:1.5rem 1rem 4rem}
+.logo{font-family:var(--fh);font-size:3rem;letter-spacing:3px;color:var(--accent);line-height:1;margin-bottom:2px}
+.logo span{color:var(--text)}
+.sub{color:var(--muted);font-size:.8rem;margin-bottom:1.75rem;letter-spacing:.3px}
+.screen{animation:fi .28s ease}
+@keyframes fi{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.hidden{display:none!important}
+
+/* ---- SEARCH ---- */
+.status-bar{display:flex;align-items:center;gap:.5rem;padding:.65rem 1rem;border-radius:8px;font-size:.82rem;margin-bottom:.9rem;border:1px solid var(--border);background:var(--surface)}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--muted)}
+.dot.green{background:var(--green)}
+.dot.red{background:#e24b4a}
+.dot.spin-dot{background:var(--accent);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+#search-input{width:100%;padding:.8rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:var(--fb);font-size:.95rem;outline:none;transition:border .2s;margin-bottom:.6rem}
+#search-input:focus{border-color:var(--accent)}
+#search-input:disabled{opacity:.4;cursor:not-allowed}
+#suggestions{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;display:none;margin-bottom:.6rem;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.sug{display:flex;align-items:center;gap:.75rem;padding:.7rem 1rem;cursor:pointer;transition:background .12s;border-bottom:1px solid var(--border)}
+.sug:last-child{border-bottom:none}
+.sug:hover,.sug.active{background:var(--s2)}
+.sug-img{width:42px;height:42px;border-radius:50%;object-fit:cover;background:var(--s2);flex-shrink:0}
+.sug-name{font-weight:600;font-size:.9rem}
+.sug-fans{font-size:.74rem;color:var(--muted);margin-top:1px}
+.err-box{color:#e24b4a;background:#2b0d0d;border:1px solid #e24b4a;border-radius:8px;padding:.7rem 1rem;font-size:.84rem}
+
+/* ---- PLAYLIST CHIPS ---- */
+.playlist-bar{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.8rem;min-height:2rem}
+.chip{display:inline-flex;align-items:center;gap:.4rem;background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:.3rem .7rem .3rem .85rem;font-size:.8rem;white-space:nowrap;max-width:180px}
+.chip-img{width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--s3)}
+.chip-name{overflow:hidden;text-overflow:ellipsis}
+.chip-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:0 0 0 .15rem;line-height:1;display:flex;align-items:center}
+.chip-del:hover{color:var(--red)}
+.start-btn{width:100%;padding:.85rem;background:linear-gradient(135deg,var(--accent),#7b2fd4);color:#fff;border:none;border-radius:var(--r);font-family:var(--fh);font-size:1.15rem;letter-spacing:1.5px;cursor:pointer;transition:opacity .2s;margin-top:.3rem}
+.start-btn:hover{opacity:.88}
+.start-btn:disabled{opacity:.3;cursor:default}
+
+/* ---- BUTTONS ---- */
+.btn-back{display:inline-flex;align-items:center;gap:.35rem;background:none;border:1px solid var(--border);color:var(--muted);padding:.35rem .85rem;border-radius:8px;cursor:pointer;font-family:var(--fb);font-size:.82rem;margin-bottom:1.1rem;transition:all .2s}
+.btn-back:hover{border-color:var(--muted);color:var(--text)}
+.btn-back svg{width:14px;height:14px}
+
+/* ---- CONFIG ---- */
+.hero{position:relative;border-radius:18px;overflow:hidden;margin-bottom:1.4rem;min-height:180px;display:flex;align-items:flex-end}
+.hero-bg{position:absolute;inset:0;background-size:cover;background-position:center 20%;filter:brightness(.35) saturate(1.2)}
+.hero-grad{position:absolute;inset:0;background:linear-gradient(180deg,transparent 0%,rgba(10,10,15,.7) 50%,rgba(10,10,15,.98) 100%)}
+.hero-content{position:relative;z-index:2;display:flex;align-items:center;gap:1.1rem;padding:1.25rem 1.25rem 1.4rem}
+.hero-avatar{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--accent);flex-shrink:0;box-shadow:0 0 24px rgba(162,56,255,.4)}
+.hero-avatar-ph{width:80px;height:80px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;border:3px solid var(--accent)}
+.hero-name{font-family:var(--fh);font-size:2rem;letter-spacing:2px;line-height:1.1;margin-bottom:.2rem}
+.hero-sub{color:rgba(255,255,255,.5);font-size:.78rem}
+.multi-hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;margin-bottom:1.4rem;display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}
+.multi-hero .label{color:var(--muted);font-size:.8rem;margin-right:.3rem}
+
+.section-title{font-family:var(--fh);font-size:1.4rem;letter-spacing:1px;margin-bottom:.7rem}
+.mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.65rem}
+.mode-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:1rem;cursor:pointer;transition:all .22s;text-align:left}
+.mode-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 20px rgba(162,56,255,.12)}
+.mode-card.active{border-color:var(--accent);background:var(--s2)}
+.mode-card .ic{font-size:1.5rem;margin-bottom:.4rem}
+.mode-card .mn{font-family:var(--fh);font-size:1.1rem;letter-spacing:1px;margin-bottom:.2rem}
+.mode-card .md{font-size:.73rem;color:var(--muted);line-height:1.5}
+.mode-card.easy{border-top:3px solid var(--green)}
+.mode-card.medium{border-top:3px solid var(--yellow)}
+.mode-card.hard{border-top:3px solid var(--red)}
+.mode-card.year{border-top:3px solid #4fc3f7}
+.mode-card.mixed{border-top:3px solid #ff80ab}
+.mode-card.lives{border-top:3px solid #ff4081;border-bottom:3px solid #ff4081}
+
+/* ---- LIVES ---- */
+.heart-row{display:flex;gap:.3rem;margin-bottom:.5rem}
+.heart{font-size:1.3rem;transition:transform .3s,opacity .3s}
+.heart.lost{opacity:.2;transform:scale(.7)}
+
+/* ---- STREAK ---- */
+.streak-badge{display:inline-flex;align-items:center;gap:.3rem;background:var(--yellow);color:#1a1a2e;border-radius:20px;padding:.15rem .65rem .15rem .5rem;font-size:.75rem;font-weight:600;margin-left:.4rem}
+.streak-badge .fire{font-size:.85rem}
+
+/* ---- SKIP ---- */
+.skip-btn{width:100%;padding:.6rem;background:var(--s2);border:1px dashed var(--muted);color:var(--muted);border-radius:var(--r);font-family:var(--fb);font-size:.8rem;cursor:pointer;margin-top:.3rem;transition:all .2s;text-align:center}
+.skip-btn:hover:not(:disabled){border-color:var(--yellow);color:var(--yellow)}
+.skip-btn:disabled{opacity:.3;cursor:default}
+
+/* ---- VOLUME SLIDER ---- */
+.vol-row{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--border)}
+.vol-row:last-child{border-bottom:none}
+.vol-row label{font-size:.85rem;flex-shrink:0;min-width:80px}
+.vol-row input[type=range]{flex:1;accent-color:var(--accent);height:4px;cursor:pointer}
+.vol-row .vol-val{font-size:.8rem;color:var(--muted);min-width:2.5rem;text-align:right}
+
+/* ---- ACHIEVEMENTS ---- */
+.ach-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem}
+.ach{background:var(--s2);border-radius:8px;padding:.65rem;text-align:center;border:1px solid var(--border);transition:all .2s}
+.ach.unlocked{border-color:var(--yellow);background:#1a1a0d}
+.ach .ach-ic{font-size:1.3rem;margin-bottom:.2rem}
+.ach .ach-nm{font-size:.75rem;color:var(--muted);margin-top:.15rem;line-height:1.3}
+.ach.unlocked .ach-nm{color:var(--text)}
+.ach.locked{opacity:.35}
+
+/* ---- REVIEW ---- */
+.review-item{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.82rem}
+.review-item:last-child{border-bottom:none}
+.review-item .ri-stat{flex-shrink:0;width:1.2rem;text-align:center;font-size:.9rem}
+.review-item .ri-correct{color:var(--green)}
+.review-item .ri-wrong{color:var(--red)}
+
+.config-row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:.9rem}
+.config-row label{font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:.4rem}
+.config-row select,.config-row input[type=number]{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:.4rem .6rem;font-family:var(--fb);font-size:.85rem;outline:none}
+.config-row select:focus,.config-row input[type=number]:focus{border-color:var(--accent)}
+.tgl{position:relative;width:38px;height:22px;background:var(--s3);border-radius:11px;cursor:pointer;transition:background .2s;border:none;padding:0;flex-shrink:0}
+.tgl.on{background:var(--accent)}
+.tgl::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--text);transition:transform .2s}
+.tgl.on::after{transform:translateX(16px)}
+
+/* ---- GAME ---- */
+.game-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem}
+.score-pill{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:.3rem .85rem;font-size:.82rem;color:var(--muted)}
+.score-pill b{color:var(--accent)}
+.round-lbl{font-family:var(--fh);font-size:.95rem;letter-spacing:1px;color:var(--muted)}
+.prog{height:3px;background:var(--s2);border-radius:2px;margin-bottom:.5rem;overflow:hidden}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--accent),#c86fff);border-radius:2px;transition:width .4s ease}
+
+/* ---- TIMER ---- */
+.timer-wrap{height:4px;background:var(--s2);border-radius:2px;margin-bottom:.5rem;overflow:hidden}
+.timer-bar{height:100%;border-radius:2px;transition:width .3s linear}
+.timer-bar.ok{background:var(--green)}
+.timer-bar.warn{background:var(--yellow)}
+.timer-bar.crit{background:var(--red)}
+
+/* ---- HINT ---- */
+.hint-btn{display:block;width:100%;padding:.5rem;background:var(--s2);border:1px dashed var(--yellow);color:var(--yellow);border-radius:8px;font-family:var(--fb);font-size:.8rem;cursor:pointer;margin-top:.4rem;transition:all .2s;text-align:center}
+.hint-btn:hover:not(:disabled){background:var(--s3);border-style:solid}
+.hint-btn:disabled{opacity:.4;cursor:default;border-color:var(--muted);color:var(--muted)}
+
+/* ---- VISUALIZER ---- */
+.vis-wrap{height:28px;display:flex;align-items:flex-end;justify-content:center;gap:3px;margin-bottom:.5rem;padding:0 .2rem}
+.vis-bar{width:4px;border-radius:3px 3px 0 0;background:var(--accent);height:4px;opacity:.3}
+.vis-wrap.playing .vis-bar{animation:visBounce .5s ease infinite alternate}
+.vis-wrap.playing .vis-bar:nth-child(1){animation-delay:0s;height:12px}
+.vis-wrap.playing .vis-bar:nth-child(2){animation-delay:.08s;height:8px}
+.vis-wrap.playing .vis-bar:nth-child(3){animation-delay:.16s;height:16px}
+.vis-wrap.playing .vis-bar:nth-child(4){animation-delay:.24s;height:10px}
+.vis-wrap.playing .vis-bar:nth-child(5){animation-delay:.32s;height:20px}
+.vis-wrap.playing .vis-bar:nth-child(6){animation-delay:.4s;height:14px}
+.vis-wrap.playing .vis-bar:nth-child(7){animation-delay:.48s;height:18px}
+.vis-wrap.playing .vis-bar:nth-child(8){animation-delay:.16s;height:6px}
+.vis-wrap.playing .vis-bar:nth-child(9){animation-delay:.24s;height:22px}
+.vis-wrap.playing .vis-bar:nth-child(10){animation-delay:0s;height:10px}
+@keyframes visBounce{0%{opacity:.3;transform:scaleY(.6)}100%{opacity:1;transform:scaleY(1)}}
+
+/* ---- PLAYER CARD ---- */
+.player-card{border-radius:var(--r);overflow:hidden;margin-bottom:1rem;border:1px solid var(--border);background:var(--surface)}
+.player-top{position:relative;height:140px;overflow:hidden;background:var(--s2)}
+.player-top-blur{position:absolute;inset:-20px;background-size:cover;background-position:center;filter:blur(22px) brightness(.3) saturate(1.4)}
+.player-top-content{position:relative;z-index:1;height:100%;display:flex;align-items:center;justify-content:center;gap:1.1rem;padding:1rem}
+.album-art{width:90px;height:90px;border-radius:10px;object-fit:cover;box-shadow:0 6px 28px rgba(0,0,0,.7);flex-shrink:0}
+.album-art-ph{width:90px;height:90px;border-radius:10px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:2.2rem;flex-shrink:0}
+.player-info{color:#fff}
+.player-info .pi-label{font-size:.7rem;color:rgba(255,255,255,.5);margin-bottom:.25rem;letter-spacing:.5px;text-transform:uppercase}
+.player-info .pi-question{font-family:var(--fh);font-size:1.25rem;letter-spacing:1.5px;line-height:1.2}
+.player-bottom{padding:.6rem 1rem .5rem}
+audio{width:100%;height:34px;accent-color:var(--accent);display:block}
+.deezer-credit{text-align:right;font-size:.68rem;color:var(--muted);margin-top:.2rem}
+.deezer-credit a{color:var(--accent);text-decoration:none}
+
+/* ---- QUIZ ---- */
+.q-text{font-family:var(--fh);font-size:1.35rem;letter-spacing:1px;margin-bottom:.75rem;line-height:1.2}
+.opts{display:grid;gap:.5rem}
+.opt{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:.75rem 1rem;text-align:left;cursor:pointer;font-family:var(--fb);font-size:.88rem;color:var(--text);transition:all .18s;width:100%}
+.opt:hover:not(:disabled){background:var(--s2);border-color:var(--accent);transform:translateX(3px)}
+.opt.correct{background:#1a0d33;border-color:var(--accent);color:var(--accent)}
+.opt.wrong{background:#2b0d0d;border-color:#e24b4a;color:#e24b4a}
+.opt:disabled{cursor:default;transform:none}
+.yn{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.65rem;touch-action:pan-y}
+.yn-btn{padding:1.1rem;font-family:var(--fh);font-size:1.5rem;letter-spacing:2px;border-radius:var(--r);border:1.5px solid var(--border);cursor:pointer;background:var(--surface);color:var(--text);transition:all .18s;text-align:center;user-select:none;-webkit-user-select:none}
+.yn-btn:hover:not(:disabled){transform:scale(1.03)}
+.yn-btn.ja{border-color:var(--green)}
+.yn-btn.nein{border-color:#e24b4a}
+.yn-btn.correct{background:#0d2b1a;border-color:var(--green);color:var(--green)}
+.yn-btn.wrong{background:#2b0d0d;border-color:#e24b4a;color:#e24b4a}
+.yn-btn:disabled{cursor:default;transform:none}
+.guess-wrap{display:flex;gap:.6rem;margin-top:.2rem}
+#guess-input{flex:1;padding:.75rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:var(--fb);font-size:.88rem;outline:none;transition:border .2s}
+#guess-input:focus{border-color:var(--accent)}
+.check-btn{padding:.75rem 1.1rem;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-family:var(--fh);font-size:1rem;letter-spacing:1px;cursor:pointer;transition:opacity .2s;white-space:nowrap}
+.check-btn:hover:not(:disabled){opacity:.85}
+.check-btn:disabled{opacity:.4;cursor:default}
+.feedback{border-radius:var(--r);margin-top:.6rem;font-size:.85rem;padding:.7rem 1rem;display:none;line-height:1.5}
+.feedback.ok{background:#1a0d33;color:#c47fff;border:1px solid var(--accent);display:block}
+.feedback.fail{background:#2b0d0d;color:#ff8080;border:1px solid #e24b4a;display:block}
+.next-btn{width:100%;padding:.8rem;background:linear-gradient(135deg,var(--accent),#7b2fd4);color:#fff;border:none;border-radius:var(--r);font-family:var(--fh);font-size:1.1rem;letter-spacing:1.5px;cursor:pointer;margin-top:.7rem;transition:opacity .2s;display:none}
+.next-btn:hover{opacity:.88}
+.end-btn{width:100%;padding:.8rem;background:var(--s2);color:var(--muted);border:1px solid var(--border);border-radius:var(--r);font-family:var(--fh);font-size:1rem;letter-spacing:1px;cursor:pointer;margin-top:.5rem;transition:all .2s}
+.end-btn:hover{border-color:var(--muted);color:var(--text)}
+
+/* ---- SWIPE HINT ---- */
+.swipe-hint{text-align:center;font-size:.72rem;color:var(--muted);margin-bottom:.5rem;opacity:0;transition:opacity .5s;display:flex;align-items:center;justify-content:center;gap:.4rem}
+.swipe-hint.show{opacity:1}
+
+/* ---- SETTINGS / STATS ---- */
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.top-bar .logo{margin-bottom:0}
+.top-actions{display:flex;gap:.5rem}
+.icon-btn{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;font-size:1.1rem}
+.icon-btn:hover{border-color:var(--accent);color:var(--text)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;animation:fi .2s ease;padding:1rem}
+.modal-overlay.hidden{display:none}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);max-width:500px;width:100%;max-height:80vh;overflow-y:auto;padding:1.5rem}
+.modal h2{font-family:var(--fh);font-size:1.6rem;letter-spacing:1px;margin-bottom:1rem}
+.modal-close{float:right;background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer}
+.modal-close:hover{color:var(--text)}
+.modal-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--border)}
+.modal-row:last-child{border-bottom:none}
+.modal-row label{font-size:.88rem}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.5rem}
+.stat-card{background:var(--s2);border-radius:8px;padding:.7rem;text-align:center}
+.stat-card .val{font-family:var(--fh);font-size:1.5rem;color:var(--accent)}
+.stat-card .lbl{font-size:.72rem;color:var(--muted);margin-top:.15rem}
+
+/* ---- RESULTS ---- */
+.result-hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:2rem 1.5rem;text-align:center;margin-bottom:1.2rem;position:relative;overflow:hidden}
+.result-hero::before{content:'';position:absolute;top:-50%;left:50%;transform:translateX(-50%);width:300px;height:300px;background:radial-gradient(circle,rgba(162,56,255,.15) 0%,transparent 70%);pointer-events:none}
+.result-big{font-family:var(--fh);font-size:4.5rem;color:var(--accent);line-height:1;position:relative}
+.result-of{font-size:.8rem;color:var(--muted);margin-bottom:.2rem}
+.result-msg{font-size:1rem;margin-top:.5rem;position:relative}
+.result-detail{color:var(--muted);font-size:.76rem;margin-top:.3rem;position:relative}
+.result-btns{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+.rb{padding:.85rem;border-radius:var(--r);font-family:var(--fh);font-size:1rem;letter-spacing:1px;cursor:pointer;transition:opacity .2s;text-align:center}
+.rb.primary{background:var(--accent);color:#fff;border:none}
+.rb.secondary{background:none;border:1px solid var(--border);color:var(--text)}
+.rb:hover{opacity:.85}
+.share-btn{grid-column:1/-1;padding:.85rem;border-radius:var(--r);font-family:var(--fh);font-size:1rem;letter-spacing:1px;cursor:pointer;background:var(--s2);color:var(--text);border:1px solid var(--border);transition:all .2s;text-align:center}
+.share-btn:hover{opacity:.85}
+
+/* ---- ANIMATIONS ---- */
+.screen{animation:fi .35s cubic-bezier(.22,1,.36,1)}
+@keyframes fi{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.score-pop{animation:pop .35s ease}
+.shake{animation:shake .4s ease}
+.opt.correct,.yn-btn.correct{animation:pop .35s ease}
+.opt.wrong,.yn-btn.wrong{animation:shake .35s ease}
+
+/* ---- LOADING ---- */
+.loading{text-align:center;padding:2.5rem 1rem;color:var(--muted)}
+.spin{display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:rot .8s linear infinite;margin-bottom:.6rem}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+@media(max-width:500px){
+  .mode-grid{grid-template-columns:1fr}
+  .yn{grid-template-columns:1fr}
+  .result-btns{grid-template-columns:1fr}
+  .hero-name{font-size:1.6rem}
+  .player-top{height:110px}
+  .album-art,.album-art-ph{width:72px;height:72px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top-bar">
+    <div>
+      <div class="logo">&#127925; <span>Music</span>Quizzles</div>
+      <p class="sub">Powered by Deezer &mdash; guess songs by your favorite artists</p>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="btn-stats" title="Statistics">&#128202;</button>
+      <button class="icon-btn" id="btn-ach" title="Achievements">&#127942;</button>
+      <button class="icon-btn" id="btn-settings" title="Settings">&#9881;</button>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div id="screen-search" class="screen">
+    <div class="status-bar" id="status-bar">
+      <div class="dot spin-dot" id="status-dot"></div>
+      <span id="status-text">Connecting to Deezer...</span>
+    </div>
+    <input id="search-input" type="text" placeholder="Enter artist..." autocomplete="off" disabled>
+    <div id="search-error"></div>
+    <div id="suggestions"></div>
+    <div class="playlist-bar" id="playlist-bar"></div>
+    <button class="start-btn" id="playlist-start" disabled>Continue to configuration</button>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="screen-config" class="screen hidden">
+    <button class="btn-back" id="back-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M19 12H5M5 12l7 7M5 12l7-7"/></svg> Back to search</button>
+    <div id="config-hero"></div>
+    <div class="section-title">Challenge</div>
+    <div class="mode-grid">
+      <div class="mode-card easy active" data-mode="easy">
+        <div class="ic">&#129002;</div>
+        <div class="mn">Easy</div>
+        <div class="md">Yes or No &mdash; is this a song by this artist?</div>
+      </div>
+      <div class="mode-card medium" data-mode="medium">
+        <div class="ic">&#129001;</div>
+        <div class="mn">Medium</div>
+        <div class="md">Pick the correct song name from 5 options.</div>
+      </div>
+      <div class="mode-card hard" data-mode="hard">
+        <div class="ic">&#128997;</div>
+        <div class="mn">Hard</div>
+        <div class="md">Type the song name &mdash; close counts too!</div>
+      </div>
+      <div class="mode-card year" data-mode="year">
+        <div class="ic">&#128197;</div>
+        <div class="mn">Year</div>
+        <div class="md">Guess the release year of the song.</div>
+      </div>
+      <div class="mode-card mixed" data-mode="mixed">
+        <div class="ic">&#127922;</div>
+        <div class="mn">Mixed</div>
+        <div class="md">Everything mixed up &mdash; different question types!</div>
+      </div>
+      <div class="mode-card lives" data-mode="lives">
+        <div class="ic">&#10084;&#65039;</div>
+        <div class="mn">Lives</div>
+        <div class="md">3 mistakes &mdash; then Game Over! Mixed questions.</div>
+      </div>
+    </div>
+    <div class="section-title" style="margin-top:1rem">Options</div>
+    <div class="config-row">
+      <label>Rounds:</label>
+      <select id="cfg-rounds">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="15">15</option>
+        <option value="20">20</option>
+        <option value="0">&infin; Endlos</option>
+      </select>
+      <label style="margin-left:.5rem">Timer:</label>
+      <button class="tgl" id="cfg-timer"></button>
+      <label style="margin-left:.5rem">Seconds:</label>
+      <select id="cfg-timer-dur">
+        <option value="10">10</option>
+        <option value="15" selected>15</option>
+        <option value="20">20</option>
+        <option value="30">30</option>
+      </select>
+    </div>
+    <button class="start-btn" id="config-start">Let's go!</button>
+  </div>
+
+  <!-- GAME -->
+  <div id="screen-game" class="screen hidden"></div>
+
+  <!-- RESULTS -->
+  <div id="screen-results" class="screen hidden"></div>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal-overlay hidden" id="settings-modal">
+    <div class="modal">
+      <button class="modal-close" id="settings-close">&times;</button>
+      <h2>&#9881; Settings</h2>
+      <div class="modal-row">
+        <label>Theme</label>
+        <button class="tgl" id="cfg-theme"></button>
+      </div>
+      <div class="modal-row">
+        <label>Default Rounds</label>
+        <select id="cfg-default-rounds">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="15">15</option>
+          <option value="20">20</option>
+        </select>
+      </div>
+      <div class="modal-row">
+        <label>Timer by default</label>
+        <button class="tgl" id="cfg-default-timer"></button>
+      </div>
+      <div class="modal-row">
+        <label>Auto-Advance (2s)</label>
+        <button class="tgl" id="cfg-auto-next"></button>
+      </div>
+      <div class="vol-row">
+        <label>Volume</label>
+        <input type="range" id="cfg-volume" min="0" max="100" value="80">
+        <span class="vol-val" id="cfg-vol-val">80%</span>
+      </div>
+      <div class="vol-row">
+        <label>Vibration</label>
+        <input type="range" id="cfg-vibrate" min="0" max="200" value="50">
+        <span class="vol-val" id="cfg-vib-val">50ms</span>
+      </div>
+      <div class="modal-row">
+        <label>Lives-Count</label>
+        <select id="cfg-lives">
+          <option value="1">1</option>
+          <option value="3" selected>3</option>
+          <option value="5">5</option>
+          <option value="10">10</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACHIEVEMENTS MODAL -->
+  <div class="modal-overlay hidden" id="ach-modal">
+    <div class="modal">
+      <button class="modal-close" id="ach-close">&times;</button>
+      <h2>&#127942; Achievements</h2>
+      <div class="ach-grid" id="ach-grid"></div>
+    </div>
+  </div>
+
+  <!-- REVIEW MODAL -->
+  <div class="modal-overlay hidden" id="review-modal">
+    <div class="modal">
+      <button class="modal-close" id="review-close">&times;</button>
+      <h2>&#128203; Wrong Answers</h2>
+      <div id="review-list"></div>
+    </div>
+  </div>
+
+  <!-- STATS MODAL -->
+  <div class="modal-overlay hidden" id="stats-modal">
+    <div class="modal">
+      <button class="modal-close" id="stats-close">&times;</button>
+      <h2>&#128202; Statistics</h2>
+      <div id="stats-content">
+        <div class="stat-grid" id="stats-grid"></div>
+        <button class="start-btn" style="margin-top:1rem" id="stats-reset">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:3001/deezer?path=';
+let playlist = [];
+let config = { mode: 'easy', rounds: 10, timer: false, timerDur: 15, endless: false };
+let allTracks = [], fakePool = [], tracks = [], round = 0, score = 0, maxPossible = 0, correctCount = 0, cur = null, answered = false;
+let currArtistIdx = 0, artist = null, audioEl = null, currentQType = '';
+
+// Timer
+let timeLeft = 0, timerInterval = null, timerBonus = 0;
+
+// Hints
+let hintLevel = 0, hintsRemaining = 0;
+
+// Streak
+let streak = 0, maxStreak = 0;
+
+// Lives
+let lives = 3;
+
+// Wrong answers
+let wrongAnswers = [];
+
+// Sound context
+let audioCtx = null;
+
+// Keyboard nav
+let sugIdx = -1;
+
+const $ = id => document.getElementById(id);
+const show = id => $('screen-'+id).classList.remove('hidden');
+const hide = id => $('screen-'+id).classList.add('hidden');
+const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = 0 | Math.random() * (i + 1); [b[i], b[j]] = [b[j], b[i]] } return b; };
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+function basePoints(mode) {
+  return { easy: 1, medium: 2, hard: 3, year: 2, mixed: 2, lives: 2 }[mode] || 1;
+}
+function maxPointsForType(type) {
+  const bp = basePoints(type);
+  return config.timer ? Math.round(bp + config.timerDur * 0.2) : bp;
+}
+function addMaxPossible(type) {
+  maxPossible += maxPointsForType(type || currentQType || config.mode);
+}
+
+/* ---- API ---- */
+async function api(path) {
+  const r = await fetch(API + encodeURIComponent(path));
+  if (!r.ok) throw new Error('Server error ' + r.status);
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message || 'Deezer error');
+  return d;
+}
+
+async function checkServer() {
+  const dot = $('status-dot'), txt = $('status-text');
+  try {
+    await api('/chart/0/tracks?limit=1');
+    dot.className = 'dot green';
+    txt.textContent = 'Connected! Search artists and start.';
+    $('search-input').disabled = false;
+    $('search-input').focus();
+  } catch (e) {
+    dot.className = 'dot red';
+    txt.innerHTML = 'Not connected. Start the server: <code style="background:#1a1a24;padding:1px 6px;border-radius:4px">python3 server.py</code> &mdash; then reload the page.';
+  }
+}
+checkServer();
+
+/* ---- SEARCH + KEYBOARD NAV (2.2) ---- */
+let searchTO = null;
+$('search-input').addEventListener('input', e => {
+  clearTimeout(searchTO);
+  const q = e.target.value.trim();
+  if (q.length < 2) { $('suggestions').style.display = 'none'; sugIdx = -1; return; }
+  searchTO = setTimeout(() => doSearch(q), 380);
+});
+
+$('search-input').addEventListener('keydown', e => {
+  const box = $('suggestions');
+  const items = box.querySelectorAll('.sug');
+  if (!items.length) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    sugIdx = Math.min(sugIdx + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('active', i === sugIdx));
+    if (items[sugIdx]) items[sugIdx].scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    sugIdx = Math.max(sugIdx - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('active', i === sugIdx));
+    if (items[sugIdx]) items[sugIdx].scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter' && sugIdx >= 0 && items[sugIdx]) {
+    e.preventDefault();
+    items[sugIdx].click();
+  } else if (e.key === 'Escape') {
+    box.style.display = 'none';
+    sugIdx = -1;
+  }
+});
+
+async function doSearch(q) {
+  $('search-error').innerHTML = '';
+  sugIdx = -1;
+  try {
+    const d = await api('/search/artist?q=' + encodeURIComponent(q) + '&limit=8');
+    const list = d.data || [];
+    const box = $('suggestions');
+    if (!list.length) { box.style.display = 'none'; return; }
+    box.innerHTML = list.map(a => `
+      <div class="sug" data-id="${a.id}" data-name="${encodeURIComponent(a.name)}" data-img="${a.picture_xl || a.picture_big || a.picture_medium || ''}">
+        <img class="sug-img" src="${a.picture_small || ''}" alt="${esc(a.name)}" onerror="this.style.background='#1a1a24'">
+        <div>
+          <div class="sug-name">${esc(a.name)}</div>
+          <div class="sug-fans">${(a.nb_fan || 0).toLocaleString('en-US')} fans</div>
+        </div>
+      </div>`).join('');
+    box.style.display = 'block';
+    box.querySelectorAll('.sug').forEach(el => el.addEventListener('click', () =>
+      selectArtist({ id: el.dataset.id, name: decodeURIComponent(el.dataset.name), img: el.dataset.img })
+    ));
+  } catch (e) {
+    $('search-error').innerHTML = '<div class="err-box">Search failed: ' + esc(e.message) + '</div>';
+  }
+}
+
+function selectArtist(a) {
+  if (playlist.some(p => String(p.id) === String(a.id))) return;
+  playlist.push(a);
+  renderPlaylist();
+  $('suggestions').style.display = 'none';
+  $('search-input').value = '';
+  $('search-input').focus();
+}
+
+function removeFromPlaylist(id) {
+  playlist = playlist.filter(a => String(a.id) !== String(id));
+  renderPlaylist();
+}
+
+function renderPlaylist() {
+  const bar = $('playlist-bar');
+  if (!playlist.length) {
+    bar.innerHTML = '';
+    $('playlist-start').disabled = true;
+    return;
+  }
+  bar.innerHTML = playlist.map(a => `
+    <div class="chip">
+      ${a.img ? `<img class="chip-img" src="${a.img}" alt="">` : '<div class="chip-img" style="background:var(--s3)"></div>'}
+      <span class="chip-name">${esc(a.name)}</span>
+      <button class="chip-del" data-id="${a.id}">&times;</button>
+    </div>`).join('');
+  bar.querySelectorAll('.chip-del').forEach(b => b.addEventListener('click', () => removeFromPlaylist(b.dataset.id)));
+  $('playlist-start').disabled = false;
+}
+
+$('playlist-start').addEventListener('click', goToConfig);
+
+/* ---- CONFIG (3.4) ---- */
+function goToConfig() {
+  stopAudio();
+  hide('search');
+  show('config');
+  // Hero for first artist or multi-artist
+  const hero = $('config-hero');
+  const a = playlist[0];
+  if (playlist.length === 1) {
+    if (a.img) {
+      hero.innerHTML = `
+        <div class="hero">
+          <div class="hero-bg" style="background-image:url('${a.img}')"></div>
+          <div class="hero-grad"></div>
+          <div class="hero-content">
+            <img class="hero-avatar" src="${a.img}" alt="${esc(a.name)}" onerror="this.style.display='none'">
+            <div>
+              <div class="hero-name">${esc(a.name)}</div>
+              <div class="hero-sub">Choose challenge &amp; options</div>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      hero.innerHTML = `
+        <div class="hero" style="background:var(--surface);border-radius:var(--r)">
+          <div class="hero-content">
+            <div class="hero-avatar-ph">&#127908;</div>
+            <div>
+              <div class="hero-name">${esc(a.name)}</div>
+              <div class="hero-sub">Choose challenge &amp; options</div>
+            </div>
+          </div>
+        </div>`;
+    }
+  } else {
+    hero.innerHTML = `<div class="multi-hero">
+      <span class="label">Playlist:</span>
+      ${playlist.map(p => `<span class="chip"><span class="chip-name">${esc(p.name)}</span></span>`).join('')}
+    </div>`;
+  }
+}
+
+$('back-search').addEventListener('click', () => { hide('config'); show('search'); });
+
+// Mode selection
+document.querySelectorAll('.mode-card').forEach(c => c.addEventListener('click', () => {
+  document.querySelectorAll('.mode-card').forEach(x => x.classList.remove('active'));
+  c.classList.add('active');
+  config.mode = c.dataset.mode;
+}));
+
+// Timer toggle
+$('cfg-timer').addEventListener('click', function () {
+  this.classList.toggle('on');
+  config.timer = this.classList.contains('on');
+});
+
+$('cfg-rounds').addEventListener('change', e => {
+  config.rounds = parseInt(e.target.value);
+  config.endless = config.rounds === 0;
+});
+
+$('cfg-timer-dur').addEventListener('change', e => {
+  config.timerDur = parseInt(e.target.value);
+});
+
+$('config-start').addEventListener('click', async () => {
+  hide('config');
+  show('game');
+  await startGame();
+});
+
+/* ---- GAME ---- */
+async function getArtistTracks(id) {
+  const all = [];
+  for (let idx = 0; idx < 100; idx += 25) {
+    try {
+      const d = await api('/artist/' + id + '/top?limit=25&index=' + idx);
+      const items = (d.data || []).filter(t => t.preview);
+      all.push(...items);
+      if (!d.next || items.length < 5) break;
+    } catch (e) { break; }
+  }
+  return all;
+}
+
+// Fake-Pool: Tracks von anderen Artists aus gleichem Genre
+async function getFakePool() {
+  const aid = playlist.length ? playlist[0].id : artist?.id;
+  const aName = playlist.length ? playlist[0].name : artist?.name;
+  if (!aid || !aName) return [];
+  const pool = [];
+  // 1. Related artists
+  try {
+    const related = await api('/artist/' + aid + '/related?limit=5');
+    const relArtists = (related.data || []).filter(r => String(r.id) !== String(aid));
+    for (const ra of relArtists.slice(0, 3)) {
+      try {
+        const d = await api('/artist/' + ra.id + '/top?limit=25');
+        const items = (d.data || []).filter(t => t.preview);
+        pool.push(...items);
+      } catch (e) { }
+    }
+  } catch (e) { }
+  // 2. Search by artist name => Deezer returns similar artists too
+  if (pool.length < 20) {
+    try {
+      const d = await api('/search/track?q=' + encodeURIComponent(aName) + '&limit=50');
+      const similar = (d.data || []).filter(t => t.preview && String(t.artist.id) !== String(aid));
+      pool.push(...similar);
+    } catch (e) { }
+  }
+  // 3. Last resort: Deezer Charts (Top-Tracks aller Genres)
+  if (pool.length < 10) {
+    try {
+      const d = await api('/chart/0/tracks?limit=50');
+      const chart = (d.data || []).filter(t => t.preview && String(t.artist.id) !== String(aid));
+      pool.push(...chart);
+    } catch (e) { }
+  }
+  return pool;
+}
+
+async function getTrackYear(track) {
+  if (track.album && track.album.release_date) {
+    return parseInt(track.album.release_date.split('-')[0]);
+  }
+  try {
+    const d = await api('/track/' + track.id);
+    if (d.album && d.album.release_date) return parseInt(d.album.release_date.split('-')[0]);
+  } catch (e) { }
+  return null;
+}
+
+async function startGame() {
+  round = 0; score = 0; maxPossible = 0; correctCount = 0; currArtistIdx = 0; streak = 0; maxStreak = 0; wrongAnswers = [];
+  $('screen-game').innerHTML = '<div class="loading"><div class="spin"></div><p>Loading songs...</p></div>';
+  try {
+    // Load tracks for all artists in playlist
+    allTracks = [];
+    for (const a of playlist) {
+      const at = await getArtistTracks(a.id);
+      at.forEach(t => { t._artist = a; });
+      allTracks.push(...at);
+    }
+    if (!allTracks.length) throw new Error('No songs with preview found.');
+    // Check if we have enough for year mode
+    if (config.mode === 'year' || config.mode === 'mixed') {
+      for (const t of allTracks) {
+        try { t._year = await getTrackYear(t); } catch (e) { t._year = null; }
+      }
+    }
+    // Lives mode init
+    lives = parseInt(localStorage.getItem('mq_lives')) || 3;
+
+    // Build fake pool for easy mode
+    fakePool = [];
+    if (config.mode === 'easy' || config.mode === 'mixed' || config.mode === 'lives') {
+      fakePool = await getFakePool();
+      fakePool.forEach(t => { t._real = false; });
+    }
+    tracks = shuffle(allTracks.filter(t => t.preview));
+    if (config.mode === 'year') {
+      tracks = tracks.filter(t => t._year != null);
+      if (!tracks.length) throw new Error('No songs with known release year found.');
+    }
+    // Init hints
+    hintsRemaining = config.endless ? 3 : Math.max(1, Math.min(3, Math.floor(config.rounds / 10)) * 3 || 1);
+    nextRound();
+  } catch (e) {
+    $('screen-game').innerHTML =
+      '<button class="btn-back" onclick="goConfig()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M19 12H5M5 12l7 7M5 12l7-7"/></svg> Back</button>' +
+      '<div class="err-box" style="margin-top:.5rem">' + esc(e.message) + '</div>';
+  }
+}
+
+function goConfig() { stopAudio(); hide('game'); hide('results'); show('config'); }
+
+function nextRound() {
+  stopTimer();
+  if (!config.endless && round >= config.rounds) { showResults(); return; }
+  // Grant 3 more hints every 10 rounds
+  if (round > 0 && round % 10 === 0 && (config.endless || round < config.rounds)) {
+    hintsRemaining += 3;
+  }
+  answered = false;
+  hintLevel = 0;
+  if (config.endless) {
+    const pool = allTracks.filter(t => t.preview);
+    cur = pool.length ? pool[Math.floor(Math.random() * pool.length)] : tracks[0];
+  } else {
+    cur = tracks[round % tracks.length];
+  }
+  round++;
+  if (config.mode === 'mixed' || config.mode === 'lives') {
+    const types = ['easy', 'medium', 'hard', 'year'];
+    const t = types[0 | Math.random() * types.length];
+    renderQuestion(t);
+  } else {
+    renderQuestion(config.mode);
+  }
+}
+
+function renderQuestion(m) {
+  currentQType = m;
+  if (m === 'easy') renderEasy();
+  else if (m === 'medium') renderMedium();
+  else if (m === 'hard') renderHard();
+  else if (m === 'year') renderYear();
+  else if (m === 'lives') renderLives();
+}
+
+function hdr(modeLabel) {
+  const lbl = config.endless ? round + ' / &infin;' : round + ' / ' + config.rounds;
+  const streakHtml = streak > 1 ? '<span class="streak-badge"><span class="fire">&#128293;</span>' + streak + 'er Streak</span>' : '';
+  return '<div class="game-hdr">' +
+    '<span class="round-lbl">' + lbl + streakHtml + '</span>' +
+    '<div class="score-pill">Score: <b>' + score + '</b></div>' +
+    '</div>' +
+    '<div class="prog"><div class="prog-bar" style="width:' +
+    (config.endless ? Math.min((round / tracks.length) * 100, 100) : ((round - 1) / config.rounds * 100)).toFixed(1) +
+    '%"></div></div>' +
+    (config.timer ? '<div class="timer-wrap"><div class="timer-bar ok" id="timer-bar" style="width:100%"></div></div>' : '');
+}
+
+function playerHTML(track, hl) {
+  const cover = (track.album && (track.album.cover_big || track.album.cover_medium || track.album.cover)) || '';
+  const blur = [30, 20, 10, 0][hl] || 30;
+  const livesHtml = config.mode === 'lives' ? '<div class="heart-row">' + Array(lives).fill('<span class="heart">&#10084;&#65039;</span>').join('') + '</div>' : '';
+  const hintBtn = hintsRemaining > 0 && !answered
+    ? '<button class="hint-btn" id="hint-btn">&#128161; Reveal hint (' + hintsRemaining + ' left &middot; 5 pts)</button>'
+    : (hintsRemaining <= 0 && hintLevel >= 3 && !answered ? '<button class="hint-btn" id="hint-btn" disabled>Image already fully revealed</button>' : '');
+  return livesHtml + '<div class="player-card">' +
+    '<div class="player-top">' +
+    (cover ? '<div class="player-top-blur" style="background-image:url(\'' + cover + '\')"></div>' : '') +
+    '<div class="player-top-content">' +
+    (cover
+      ? '<img class="album-art" src="' + cover + '" alt="Album" id="album-img" style="filter:blur(' + blur + 'px);transition:filter .4s ease">'
+      : '<div class="album-art-ph">&#127925;</div>') +
+    '<div class="player-info"><div class="pi-label">&#127911; Listen &amp; guess</div>' +
+    '<div class="pi-question">' + (config.mode === 'year' ? 'What year?' : 'Who sings this?') + '</div></div>' +
+    '</div></div>' +
+    '<div class="player-bottom">' +
+    '<div class="vis-wrap" id="vis-wrap">' + Array(10).fill('<div class="vis-bar"></div>').join('') + '</div>' +
+    '<audio controls autoplay src="' + track.preview + '" id="quiz-audio"></audio>' +
+    hintBtn +
+    '<div class="deezer-credit">Preview via <a href="https://deezer.com" target="_blank">Deezer</a></div>' +
+    '</div></div>';
+}
+
+/* ---- TIMER (3.3) ---- */
+function startTimer(seconds, onExpire) {
+  timeLeft = seconds;
+  if (!config.timer) { timerBonus = 0; return; }
+  const bar = $('timer-bar');
+  if (!bar) return;
+  bar.style.width = '100%';
+  bar.className = 'timer-bar ok';
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft -= 0.1;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      stopTimer();
+      onExpire();
+      return;
+    }
+    const pct = (timeLeft / seconds) * 100;
+    bar.style.width = pct + '%';
+    bar.className = 'timer-bar ' + (pct > 40 ? 'ok' : pct > 20 ? 'warn' : 'crit');
+  }, 100);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerBonus = config.timer ? Math.round(timeLeft * 0.2) : 0;
+}
+
+function getTotalPoints(type) {
+  const bp = basePoints(type || currentQType || config.mode);
+  return bp + timerBonus;
+}
+
+/* ---- VISUALIZER (2.3) ---- */
+function toggleVisualizer(playing) {
+  const wrap = $('vis-wrap');
+  if (!wrap) return;
+  wrap.classList.toggle('playing', playing);
+}
+
+function setupAudio() {
+  audioEl = $('quiz-audio');
+  if (audioEl) {
+    const vol = (parseInt(localStorage.getItem('mq_volume')) || 80) / 100;
+    audioEl.volume = vol;
+    audioEl.addEventListener('play', () => toggleVisualizer(true));
+    audioEl.addEventListener('pause', () => toggleVisualizer(false));
+    audioEl.addEventListener('ended', () => toggleVisualizer(false));
+  }
+}
+
+/* ---- HINT ---- */
+function useHint() {
+  if (answered || hintsRemaining <= 0 || hintLevel >= 3 || score < 5) return;
+  score -= 5;
+  hintsRemaining--;
+  hintLevel++;
+  const sp = document.querySelector('.score-pill b');
+  if (sp) sp.textContent = score;
+  const art = document.querySelector('.album-art');
+  if (art) art.style.filter = 'blur(' + [30, 20, 10, 0][hintLevel] + 'px)';
+  const hb = $('hint-btn');
+  if (hb) {
+    if (hintLevel >= 3) {
+      hb.disabled = true; hb.textContent = '&#10003; Image fully revealed';
+    } else if (hintsRemaining <= 0) {
+      hb.disabled = true; hb.textContent = 'No hints left';
+    } else if (score < 5) {
+      hb.disabled = true; hb.textContent = 'Too few points (5 needed)';
+    } else {
+      hb.textContent = '&#128161; Reveal hint (' + hintsRemaining + ' left &middot; 5 pts)';
+    }
+  }
+}
+
+function setupHintBtn() {
+  const hb = $('hint-btn');
+  if (hb) hb.addEventListener('click', useHint);
+}
+
+/* ---- EASY / YESNO (2.7 Swipe) ---- */
+function renderEasy() {
+  const useReal = Math.random() < 0.5;
+  let disp;
+  if (useReal) {
+    disp = { ...cur, _real: true };
+  } else {
+    const f = fakePool.filter(t => t.preview);
+    disp = f.length ? { ...f[0 | Math.random() * f.length], _real: false } : { ...cur, _real: true };
+  }
+  const ans = disp._real ? 'yes' : 'no';
+  const aName = cur._artist ? cur._artist.name : artist ? artist.name : 'diesem Artisten';
+
+  $('screen-game').innerHTML = hdr('Easy') + playerHTML(disp, hintLevel) +
+    '<div class="swipe-hint" id="swipe-hint">&#8592; Swipe for No &nbsp;&middot;&nbsp; Swipe for Yes &#8594;</div>' +
+    '<div class="q-text">Is this a song by ' + esc(aName) + '?</div>' +
+    '<div class="yn" id="yn-area">' +
+    '<button class="yn-btn nein" data-val="no">&#10007; NO</button>' +
+    '<button class="yn-btn ja" data-val="yes">&#10003; YES</button>' +
+    '</div>' +
+    '<div class="feedback" id="fb"></div>' +
+    '<button class="next-btn" id="nxt">' + (endReached() ? 'Results' : 'Next') + ' &rarr;</button>' +
+    '<button class="skip-btn" id="skip-btn">&#9200; Skip (-2 pts)</button>' +
+    (config.endless ? '<button class="end-btn" id="end-btn">End Quiz &rarr;</button>' : '');
+
+  // Button clicks (2.7)
+  document.querySelectorAll('.yn-btn').forEach(b => b.addEventListener('click', () => handleEasyAnswer(b.dataset.val, ans, disp, aName)));
+
+  // Swipe (2.7)
+  setupSwipe(ans, disp, aName);
+
+  // Hint
+  setupHintBtn();
+
+  // Timer
+  if (config.timer) {
+    startTimer(config.timerDur, () => handleEasyAnswerTimeout(ans, disp, aName));
+  }
+
+  // Audio + Visualizer
+  setupAudio();
+
+  // Next + End buttons
+  $('nxt').addEventListener('click', nextRound);
+  const eb = $('end-btn');
+  if (eb) eb.addEventListener('click', showResults);
+  // Skip
+  const sb = $('skip-btn');
+  if (sb) sb.addEventListener('click', handleSkip);
+}
+
+function handleEasyAnswer(val, ans, disp, aName) {
+  if (answered) return;
+  answered = true;
+  stopTimer();
+  stopAudio();
+  addMaxPossible('easy');
+  const ok = val === ans;
+  if (ok) { 
+    score += getTotalPoints('easy'); 
+    correctCount++; 
+    streak++;
+    if (streak > maxStreak) maxStreak = streak;
+    soundCorrect();
+    vibrate(50);
+  } else {
+    streak = 0;
+    soundWrong();
+    vibrate(200);
+    wrongAnswers.push({ title: disp.title, artist: disp._real ? aName : disp.artist?.name, correct: ans === 'yes' ? 'Ja' : 'Nein', given: val === 'yes' ? 'Ja' : 'Nein' });
+    if (config.mode === 'lives') {
+      lives--;
+      if (lives <= 0) { setTimeout(showResults, 600); return; }
+    }
+  }
+  document.getElementById('skip-btn').style.display = 'none';
+  document.querySelectorAll('.yn-btn').forEach(x => { x.disabled = true; x.classList.add(x.dataset.val === ans ? 'correct' : 'wrong'); });
+  const fb = $('fb');
+  fb.className = 'feedback ' + (ok ? 'ok' : 'fail');
+  const name = disp.title || '?';
+  let who;
+  if (disp._real) {
+    who = '"' + esc(name) + '" is by ' + esc(aName);
+  } else {
+    who = '"' + esc(name) + '" is by ' + esc(disp.artist?.name || 'another artist') + ' &mdash; NOT ' + esc(aName);
+  }
+  fb.innerHTML = (ok ? '&#10003; Correct! ' : '&#10007; Wrong! ') + who + bonusStr();
+  $('nxt').style.display = 'block';
+  if (ok && localStorage.getItem('mq_autonext') === 'true') setTimeout(nextRound, 2000);
+}
+
+function handleEasyAnswerTimeout(ans, disp, aName) {
+  if (answered) return;
+  answered = true;
+  stopTimer();
+  stopAudio();
+  document.getElementById('skip-btn').style.display = 'none';
+  addMaxPossible('easy');
+  streak = 0;
+  document.querySelectorAll('.yn-btn').forEach(x => { x.disabled = true; x.classList.add(x.dataset.val === ans ? 'correct' : 'wrong'); });
+  const fb = $('fb');
+  fb.className = 'feedback fail';
+  const name = disp.title || '?';
+  fb.innerHTML = '&#9200; Time\'s up! It was: "' + esc(name) + '"';
+  $('nxt').style.display = 'block';
+}
+
+/* ---- SWIPE (2.7) ---- */
+function setupSwipe(ans, disp, aName) {
+  const area = $('yn-area');
+  if (!area) return;
+  let sx = 0, ex = 0;
+  area.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
+  area.addEventListener('touchend', e => {
+    ex = e.changedTouches[0].clientX;
+    const dx = ex - sx;
+    if (Math.abs(dx) > 60) {
+      const val = dx > 0 ? 'yes' : 'no';
+      handleEasyAnswer(val, ans, disp, aName);
+    }
+  }, { passive: true });
+  // Show hint briefly
+  const hint = $('swipe-hint');
+  if (hint) setTimeout(() => hint.classList.add('show'), 200);
+}
+
+/* ---- MEDIUM ---- */
+function renderMedium() {
+  const correct = cur;
+  const pool = shuffle(allTracks.filter(t => t.id !== correct.id && t.title !== correct.title && t.preview)).slice(0, 4);
+  const opts = shuffle([correct, ...pool]);
+  $('screen-game').innerHTML = hdr('Medium') + playerHTML(correct, hintLevel) +
+    '<div class="q-text">Which song is this?</div>' +
+    '<div class="opts">' +
+    opts.map((o, i) => '<button class="opt" data-id="' + o.id + '">' + String.fromCharCode(65 + i) + '. ' + esc(o.title) + '</button>').join('') +
+    '</div>' +
+    '<div class="feedback" id="fb"></div>' +
+    '<button class="next-btn" id="nxt">' + (endReached() ? 'Results' : 'Next') + ' &rarr;</button>' +
+    '<button class="skip-btn" id="skip-btn">&#9200; Skip (-2 pts)</button>' +
+    (config.endless ? '<button class="end-btn" id="end-btn">End Quiz &rarr;</button>' : '');
+
+  document.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => {
+    if (answered) return;
+    answered = true;
+    stopTimer();
+    stopAudio();
+    document.getElementById('skip-btn').style.display = 'none';
+    addMaxPossible('medium');
+    const ok = b.dataset.id == correct.id;
+    if (ok) { 
+      score += getTotalPoints('medium'); 
+      correctCount++; 
+      streak++;
+      if (streak > maxStreak) maxStreak = streak;
+      soundCorrect();
+      vibrate(50);
+    } else {
+      streak = 0;
+      soundWrong();
+      vibrate(200);
+      wrongAnswers.push({ title: correct.title, artist: correct._artist?.name || '?', correct: correct.title, given: b.textContent.replace(/^[A-Z]\.\s*/, '') });
+      if (config.mode === 'lives') {
+        lives--;
+        if (lives <= 0) { setTimeout(showResults, 600); return; }
+      }
+    }
+    document.querySelectorAll('.opt').forEach(x => { x.disabled = true; if (x.dataset.id == correct.id) x.classList.add('correct'); else if (x === b) x.classList.add('wrong'); });
+    const fb = $('fb');
+    fb.className = 'feedback ' + (ok ? 'ok' : 'fail');
+    fb.innerHTML = (ok ? '&#10003; Correct! "' + esc(correct.title) + '"' : '&#10007; Wrong! It was: "' + esc(correct.title) + '"') + bonusStr();
+    $('nxt').style.display = 'block';
+    if (ok && localStorage.getItem('mq_autonext') === 'true') setTimeout(nextRound, 2000);
+  }));
+
+  if (config.timer) startTimer(config.timerDur, () => handleTimeout('It was: "' + esc(correct.title) + '"'));
+
+  setupAudio();
+  setupHintBtn();
+
+  $('nxt').addEventListener('click', nextRound);
+  const eb = $('end-btn');
+  if (eb) eb.addEventListener('click', showResults);
+  const sb = $('skip-btn');
+  if (sb) sb.addEventListener('click', handleSkip);
+}
+
+/* ---- HARD ---- */
+function renderHard() {
+  const correct = cur;
+  $('screen-game').innerHTML = hdr('Hard') + playerHTML(correct, hintLevel) +
+    '<div class="q-text">What is this song called?</div>' +
+    '<div class="guess-wrap">' +
+    '<input id="guess-input" type="text" placeholder="Enter song name..." autocomplete="off">' +
+    '<button class="check-btn" id="chk">Check</button>' +
+    '</div>' +
+    '<div class="feedback" id="fb"></div>' +
+    '<button class="next-btn" id="nxt">' + (endReached() ? 'Results' : 'Next') + ' &rarr;</button>' +
+    '<button class="skip-btn" id="skip-btn">&#9200; Skip (-2 pts)</button>' +
+    (config.endless ? '<button class="end-btn" id="end-btn">End Quiz &rarr;</button>' : '');
+
+  const check = () => {
+    if (answered) return;
+    const g = $('guess-input').value.trim();
+    if (!g) return;
+    answered = true;
+    stopTimer();
+    stopAudio();
+    document.getElementById('skip-btn').style.display = 'none';
+    addMaxPossible('hard');
+    $('guess-input').disabled = true;
+    $('chk').disabled = true;
+    const sim = similarity(norm(g), norm(correct.title));
+    const ok = sim >= 0.7;
+    if (ok) { 
+      score += getTotalPoints('hard'); 
+      correctCount++; 
+      streak++;
+      if (streak > maxStreak) maxStreak = streak;
+      soundCorrect();
+      vibrate(50);
+    } else {
+      streak = 0;
+      soundWrong();
+      vibrate(200);
+      wrongAnswers.push({ title: correct.title, artist: correct._artist?.name || '?', correct: correct.title, given: g });
+      if (config.mode === 'lives') {
+        lives--;
+        if (lives <= 0) { setTimeout(showResults, 600); return; }
+      }
+    }
+    const fb = $('fb');
+    fb.className = 'feedback ' + (ok ? 'ok' : 'fail');
+    const pct = Math.round(sim * 100);
+    fb.innerHTML = (ok ? '&#10003; Correct! "' + esc(correct.title) + '" (' + pct + '% match)' : '&#10007; Wrong! It was: "' + esc(correct.title) + '" (' + pct + '%)') + bonusStr();
+    $('nxt').style.display = 'block';
+    if (ok && localStorage.getItem('mq_autonext') === 'true') setTimeout(nextRound, 2000);
+  };
+
+  $('chk').addEventListener('click', check);
+  $('guess-input').addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+  if (config.timer) startTimer(config.timerDur, () => handleTimeout('It was: "' + esc(correct.title) + '"'));
+
+  setupAudio();
+  setupHintBtn();
+
+  $('nxt').addEventListener('click', nextRound);
+  const eb = $('end-btn');
+  if (eb) eb.addEventListener('click', showResults);
+  const sb = $('skip-btn');
+  if (sb) sb.addEventListener('click', handleSkip);
+}
+
+/* ---- YEAR ---- */
+function renderYear() {
+  const correct = cur;
+  const correctYear = correct._year || '????';
+  $('screen-game').innerHTML = hdr('Year') + playerHTML(correct, hintLevel) +
+    '<div class="q-text">Aus welchem Year ist dieser Song?</div>' +
+    '<div class="guess-wrap">' +
+    '<input id="guess-input" type="number" placeholder="YYYY" min="1900" max="2030" autocomplete="off">' +
+    '<button class="check-btn" id="chk">Check</button>' +
+    '</div>' +
+    '<div class="feedback" id="fb"></div>' +
+    '<button class="next-btn" id="nxt">' + (endReached() ? 'Results' : 'Next') + ' &rarr;</button>' +
+    '<button class="skip-btn" id="skip-btn">&#9200; Skip (-2 pts)</button>' +
+    (config.endless ? '<button class="end-btn" id="end-btn">End Quiz &rarr;</button>' : '');
+
+  const check = () => {
+    if (answered) return;
+    const g = $('guess-input').value.trim();
+    if (!g || isNaN(g)) return;
+    answered = true;
+    stopTimer();
+    stopAudio();
+    document.getElementById('skip-btn').style.display = 'none';
+    addMaxPossible('year');
+    $('guess-input').disabled = true;
+    $('chk').disabled = true;
+    const guess = parseInt(g);
+    const diff = Math.abs(guess - correctYear);
+    const ok = diff <= 1;
+    if (ok) { 
+      score += getTotalPoints('year'); 
+      correctCount++; 
+      streak++;
+      if (streak > maxStreak) maxStreak = streak;
+      soundCorrect();
+      vibrate(50);
+    } else {
+      streak = 0;
+      soundWrong();
+      vibrate(200);
+      wrongAnswers.push({ title: cur.title, artist: cur._artist?.name || '?', correct: String(correctYear), given: g });
+      if (config.mode === 'lives') {
+        lives--;
+        if (lives <= 0) { setTimeout(showResults, 600); return; }
+      }
+    }
+    const fb = $('fb');
+    fb.className = 'feedback ' + (ok ? 'ok' : 'fail');
+    if (ok) {
+      const bonus = diff === 0 ? ' &mdash; Exactly right!' : ' &mdash; Only ' + diff + ' year(s) off!';
+      fb.innerHTML = '&#10003; Correct! ' + correctYear + bonus + bonusStr();
+    } else {
+      fb.innerHTML = '&#10007; Wrong! It was ' + correctYear + ' (You guessed ' + guess + ')' + bonusStr();
+    }
+    $('nxt').style.display = 'block';
+    if (ok && localStorage.getItem('mq_autonext') === 'true') setTimeout(nextRound, 2000);
+  };
+
+  $('chk').addEventListener('click', check);
+  $('guess-input').addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+  if (config.timer) startTimer(config.timerDur, () => handleTimeout('It was ' + correctYear));
+
+  setupAudio();
+  setupHintBtn();
+
+  $('nxt').addEventListener('click', nextRound);
+  const eb = $('end-btn');
+  if (eb) eb.addEventListener('click', showResults);
+  const sb = $('skip-btn');
+  if (sb) sb.addEventListener('click', handleSkip);
+}
+
+/* ---- LIVES (1.2) ---- */
+function renderLives() {
+  const types = ['easy', 'medium', 'hard', 'year'];
+  const chosenType = types[0 | Math.random() * types.length];
+  renderQuestion(chosenType);
+}
+
+/* ---- SKIP (3.2) ---- */
+function handleSkip() {
+  if (answered || score < 2) return;
+  answered = true;
+  stopTimer();
+  stopAudio();
+  document.getElementById('skip-btn').style.display = 'none';
+  soundSkip();
+  score -= 2;
+  addMaxPossible(currentQType || config.mode);
+  streak = 0;
+  const fb = $('fb');
+  fb.className = 'feedback fail';
+  fb.innerHTML = '&#9200; Skipped (-2 pts)';
+  $('nxt').style.display = 'block';
+  // Disable inputs
+  document.querySelectorAll('.opt, .yn-btn, #guess-input, #chk').forEach(el => { if (el) el.disabled = true; });
+}
+
+/* ---- SHARED ---- */
+function endReached() {
+  if (config.endless) return round >= tracks.length;
+  return round >= config.rounds;
+}
+
+function bonusStr() {
+  return timerBonus > 0 ? ' <span style="color:var(--yellow)">(+' + timerBonus + ' Bonus)</span>' : '';
+}
+
+function handleTimeout(msg) {
+  if (answered) return;
+  answered = true;
+  stopTimer();
+  stopAudio();
+  document.getElementById('skip-btn').style.display = 'none';
+  addMaxPossible(currentQType || config.mode);
+  const fb = $('fb');
+  fb.className = 'feedback fail';
+  fb.innerHTML = "&#9200; Time's up! " + msg;
+  // Disable all interactive elements
+  document.querySelectorAll('.opt, .yn-btn, #guess-input, #chk').forEach(el => { if (el) el.disabled = true; });
+  $('nxt').style.display = 'block';
+}
+
+/* ---- AUDIO STOP ---- */
+function stopAudio() {
+  if (audioEl) {
+    audioEl.pause();
+    audioEl.currentTime = 0;
+    audioEl.removeAttribute('src');
+    audioEl.load();
+    audioEl = null;
+  }
+  toggleVisualizer(false);
+}
+
+/* ---- SOUND EFFECTS (3.5) ---- */
+function playBeep(freq, dur) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const vol = (parseInt(localStorage.getItem('mq_volume')) || 80) / 100;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol * 0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur);
+  } catch (e) { /* silent fail */ }
+}
+function soundCorrect() { playBeep(880, 0.15); setTimeout(() => playBeep(1100, 0.2), 100); }
+function soundWrong() { playBeep(300, 0.3); }
+function soundSkip() { playBeep(550, 0.12); }
+
+/* ---- HAPTIC FEEDBACK (5.4) ---- */
+function vibrate(dur) {
+  try {
+    const intensity = parseInt(localStorage.getItem('mq_vibrate')) || 50;
+    if (intensity > 0 && navigator.vibrate) navigator.vibrate(Math.round(dur * intensity / 100));
+  } catch (e) { /* silent fail */ }
+}
+
+/* ---- FULLSCREEN (5.3) ---- */
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+/* ---- UTILS ---- */
+function norm(s) { return String(s).toLowerCase().replace(/[^a-z0-9\u00e4\u00f6\u00fc\u00df\u00e0-\u00ff\s]/g, '').replace(/\s+/g, ' ').trim(); }
+function similarity(a, b) {
+  if (a === b) return 1;
+  if (b.includes(a) || a.includes(b)) return 0.9;
+  const l = a.length > b.length ? a : b, s = a.length > b.length ? b : a;
+  if (!l.length) return 1;
+  return (l.length - editDist(l, s)) / l.length;
+}
+function editDist(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, (_, i) => Array.from({ length: n + 1 }, (_, j) => i ? j ? 0 : i : j));
+  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+  return dp[m][n];
+}
+
+/* ---- RESULTS + SHARE (3.8) ---- */
+function showResults() {
+  stopTimer();
+  stopAudio();
+  hide('game');
+  show('results');
+  checkAchievements();
+  const dispMax = Math.round(maxPossible);
+  const pct = Math.round(score / (Math.max(dispMax, 1)) * 100);
+  const msg = pct === 100 ? '&#127942; Perfect! True fan!' : pct >= 80 ? '&#128293; Great!' : pct >= 60 ? '&#128526; Well done!' : pct >= 40 ? '&#128578; Keep practicing!' : '&#128517; You can do better!';
+  const modeLabel = { easy: 'Easy', medium: 'Medium', hard: 'Hard', year: 'Year', mixed: 'Mixed', lives: 'Lives' }[config.mode] || config.mode;
+  const aLabel = playlist.map(a => a.name).join(', ');
+  const livesEnd = config.mode === 'lives' && lives <= 0 ? '<div style="color:var(--red);margin-top:.3rem;font-size:.85rem">&#10084;&#65039; Alle Lives verloren!</div>' : '';
+
+  $('screen-results').innerHTML =
+    '<div class="result-hero">' +
+    '<div class="result-of">Your Score' + (config.endless ? ' (Endless)' : '') + (config.mode === 'lives' ? ' (Lives)' : '') + '</div>' +
+    '<div class="result-big">' + score + '/' + dispMax + '</div>' +
+    '<div class="result-msg">' + msg + '</div>' +
+    livesEnd +
+    '<div class="result-detail">' + pct + '% &mdash; ' + modeLabel + ' &mdash; ' + esc(aLabel) + (maxStreak > 1 ? ' &mdash; Best Streak: ' + maxStreak : '') + '</div>' +
+    '</div>' +
+    '<div class="result-btns">' +
+    '<button class="rb primary" onclick="restartSame()">Play Again</button>' +
+    '<button class="rb secondary" onclick="goConfig()">Config Menu</button>' +
+    '<button class="rb secondary" onclick="goSearch()">New Search</button>' +
+    (wrongAnswers.length ? '<button class="share-btn" id="review-btn">&#128203; Wrong (' + wrongAnswers.length + ')</button>' : '') +
+    '<button class="share-btn" id="share-btn">&#128640; Share</button>' +
+    '</div>';
+
+  $('share-btn').addEventListener('click', async () => {
+    const text = 'MusicQuizzles: ' + score + '/' + dispMax + ' (' + pct + '%) - ' + modeLabel + ' - ' + aLabel + (maxStreak > 1 ? ' - Streak: ' + maxStreak : '') + ' (via MusicQuizzles)';
+    if (navigator.share) {
+      try { await navigator.share({ title: 'MusicQuizzles', text: text }); } catch (e) { }
+    } else {
+      try {
+        await navigator.clipboard.writeText(text);
+        $('share-btn').textContent = '&#9989; Copied!';
+      } catch (e) {
+        prompt('Copy the text:', text);
+      }
+    }
+  });
+
+  const rb = $('review-btn');
+  if (rb) rb.addEventListener('click', showReview);
+}
+
+function restartSame() { stopAudio(); hide('results'); show('game'); round = 0; score = 0; maxPossible = 0; correctCount = 0; streak = 0; maxStreak = 0; wrongAnswers = []; nextRound(); }
+function goSearch() { stopAudio(); hide('results'); hide('game'); show('search'); playlist = []; renderPlaylist(); $('search-input').value = ''; $('search-input').focus(); }
+
+/* ---- REVIEW (3.1) ---- */
+function showReview() {
+  $('review-list').innerHTML = wrongAnswers.length ? wrongAnswers.map(w =>
+    '<div class="review-item">' +
+    '<div class="ri-stat ri-wrong">&#10007;</div>' +
+    '<div><strong>' + esc(w.title) + '</strong><br><span style="font-size:.75rem;color:var(--muted)">' + esc(w.artist) + ' &mdash; Your answer: ' + esc(w.given) + ' &mdash; Correct: ' + esc(w.correct) + '</span></div>' +
+    '</div>'
+  ).join('') : '<p style="color:var(--muted);text-align:center">No wrong answers! &#127881;</p>';
+  $('review-modal').classList.remove('hidden');
+}
+$('review-close').addEventListener('click', () => $('review-modal').classList.add('hidden'));
+$('review-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.target.classList.add('hidden'); });
+
+/* ---- ACHIEVEMENTS (2.2) ---- */
+const ACHIEVEMENTS = [
+  { id: 'first', ic: '&#127881;', name: 'First Game', check: s => s.games >= 1 },
+  { id: '10games', ic: '&#127922;', name: '10 Games', check: s => s.games >= 10 },
+  { id: '100songs', ic: '&#127925;', name: '100 Songs', check: s => s.total >= 100 },
+  { id: 'perfect', ic: '&#127942;', name: 'Perfect Game', check: () => { try { const s = JSON.parse(localStorage.getItem('mq_stats')); return s && s.bestPct === 100; } catch(e) { return false; } } },
+  { id: 'streak5', ic: '&#128293;', name: 'Streak 5', check: () => { try { const a = JSON.parse(localStorage.getItem('mq_achievements') || '{}'); return !!(a.streak5); } catch(e) { return false; } } },
+  { id: 'endless', ic: '&#127760;', name: 'Endless Hero', check: () => { try { const a = JSON.parse(localStorage.getItem('mq_achievements') || '{}'); return !!(a.endless); } catch(e) { return false; } } },
+  { id: 'allmodes', ic: '&#127911;', name: 'All Modes', check: () => { try { const s = JSON.parse(localStorage.getItem('mq_stats')); return s && s.games >= 5; } catch(e) { return false; } } },
+];
+
+function getAchievements() {
+  try { return JSON.parse(localStorage.getItem('mq_achievements')) || {}; } catch(e) { return {}; }
+}
+function saveAchievements(a) { localStorage.setItem('mq_achievements', JSON.stringify(a)); }
+
+function checkAchievements() {
+  const stats = getStats();
+  const achs = getAchievements();
+  let changed = false;
+  if (stats.games >= 1 && !achs.first) { achs.first = true; changed = true; }
+  if (stats.games >= 10 && !achs['10games']) { achs['10games'] = true; changed = true; }
+  if (stats.total >= 100 && !achs['100songs']) { achs['100songs'] = true; changed = true; }
+  if (stats.bestPct === 100 && !achs.perfect) { achs.perfect = true; changed = true; }
+  if (maxStreak >= 5 && !achs.streak5) { achs.streak5 = true; changed = true; }
+  if (config.endless && round >= 50 && !achs.endless) { achs.endless = true; changed = true; }
+  if (stats.games >= 5 && !achs.allmodes) { achs.allmodes = true; changed = true; }
+  if (changed) saveAchievements(achs);
+}
+
+function renderAchievements() {
+  const achs = getAchievements();
+  const grid = $('ach-grid');
+  grid.innerHTML = ACHIEVEMENTS.map(a => {
+    const unlocked = !!achs[a.id];
+    return '<div class="ach ' + (unlocked ? 'unlocked' : 'locked') + '">' +
+      '<div class="ach-ic">' + a.ic + '</div>' +
+      '<div class="ach-nm">' + (unlocked ? a.name : '???') + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+$('btn-ach').addEventListener('click', () => { renderAchievements(); $('ach-modal').classList.remove('hidden'); });
+$('ach-close').addEventListener('click', () => $('ach-modal').classList.add('hidden'));
+$('ach-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.target.classList.add('hidden'); });
+
+/* ---- SETTINGS + STATS ---- */
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem('mq_settings'));
+    if (s) {
+      if (s.theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      config.timer = s.timer || false;
+      config.timerDur = s.timerDur || 15;
+      config.rounds = s.rounds || 10;
+      if (config.rounds === 0) config.endless = true;
+      // Apply UI
+      const ct = $('cfg-timer');
+      if (ct && config.timer) ct.classList.add('on');
+      const cd = $('cfg-timer-dur');
+      if (cd) cd.value = config.timerDur;
+      const cr = $('cfg-rounds');
+      if (cr) cr.value = config.rounds;
+      // Theme toggle in settings
+      const th = $('cfg-theme');
+      if (th && s.theme === 'light') th.classList.add('on');
+      // Defaults in settings
+      const dr = $('cfg-default-rounds');
+      if (dr) dr.value = config.rounds;
+      const dt = $('cfg-default-timer');
+      if (dt && config.timer) dt.classList.add('on');
+      // Auto-next
+      const an = $('cfg-auto-next');
+      const autoNextOn = s.autoNext === true || localStorage.getItem('mq_autonext') === 'true';
+      if (an) an.classList.toggle('on', autoNextOn);
+      if (autoNextOn) localStorage.setItem('mq_autonext', 'true');
+      // Lives
+      const lv = $('cfg-lives');
+      if (lv && s.lives) lv.value = s.lives;
+    }
+  } catch (e) {}
+  // Volume
+  const vol = parseInt(localStorage.getItem('mq_volume'));
+  if (!isNaN(vol)) {
+    const vs = $('cfg-volume');
+    const vl = $('cfg-vol-val');
+    if (vs) vs.value = vol;
+    if (vl) vl.textContent = vol + '%';
+  }
+  // Vibrate
+  const vib = parseInt(localStorage.getItem('mq_vibrate'));
+  if (!isNaN(vib)) {
+    const vs = $('cfg-vibrate');
+    const vl = $('cfg-vib-val');
+    if (vs) vs.value = vib;
+    if (vl) vl.textContent = vib + 'ms';
+  }
+}
+function saveSettings() {
+  const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  const autoNext = $('cfg-auto-next') ? $('cfg-auto-next').classList.contains('on') : false;
+  const lives = parseInt($('cfg-lives')?.value) || 3;
+  localStorage.setItem('mq_settings', JSON.stringify({
+    theme, timer: config.timer, timerDur: config.timerDur, rounds: config.rounds, autoNext, lives
+  }));
+}
+
+// Theme
+function toggleTheme() {
+  const html = document.documentElement;
+  const isLight = html.getAttribute('data-theme') === 'light';
+  html.setAttribute('data-theme', isLight ? '' : 'light');
+  const th = $('cfg-theme');
+  if (th) th.classList.toggle('on');
+  saveSettings();
+}
+// Light theme vars
+const lightStyle = document.createElement('style');
+lightStyle.textContent = 'html[data-theme="light"]{--bg:#f5f5f8;--surface:#ffffff;--s2:#eeeef2;--s3:#e0e0e6;--text:#1a1a2e;--muted:#8888aa;--border:rgba(0,0,0,0.1)}html[data-theme="light"] .result-hero::before{background:radial-gradient(circle,rgba(162,56,255,.08) 0%,transparent 70%)}';
+document.head.appendChild(lightStyle);
+
+// Settings modal
+$('btn-settings').addEventListener('click', () => $('settings-modal').classList.remove('hidden'));
+$('settings-close').addEventListener('click', () => $('settings-modal').classList.add('hidden'));
+$('settings-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.target.classList.add('hidden'); });
+$('cfg-theme').addEventListener('click', toggleTheme);
+$('cfg-default-rounds').addEventListener('change', e => { config.rounds = parseInt(e.value); saveSettings(); });
+$('cfg-default-timer').addEventListener('click', function() {
+  this.classList.toggle('on');
+  config.timer = this.classList.contains('on');
+  saveSettings();
+});
+$('cfg-auto-next').addEventListener('click', function() {
+  this.classList.toggle('on');
+  localStorage.setItem('mq_autonext', this.classList.contains('on'));
+  saveSettings();
+});
+$('cfg-volume').addEventListener('input', function() {
+  localStorage.setItem('mq_volume', this.value);
+  $('cfg-vol-val').textContent = this.value + '%';
+  // Apply volume to current audio
+  if (audioEl) audioEl.volume = this.value / 100;
+});
+$('cfg-vibrate').addEventListener('input', function() {
+  localStorage.setItem('mq_vibrate', this.value);
+  $('cfg-vib-val').textContent = this.value + 'ms';
+});
+$('cfg-lives').addEventListener('change', function() {
+  localStorage.setItem('mq_lives', this.value);
+  saveSettings();
+});
+
+// Stats
+function getStats() {
+  try { return JSON.parse(localStorage.getItem('mq_stats')) || { games:0, score:0, maxScore:0, correct:0, total:0, bestScore:0, bestPct:0 }; }
+  catch(e) { return { games:0, score:0, maxScore:0, correct:0, total:0, bestScore:0, bestPct:0 }; }
+}
+function saveStats(s) { localStorage.setItem('mq_stats', JSON.stringify(s)); }
+function recordGame(s, m, t, c) {
+  const stats = getStats();
+  stats.games++;
+  stats.score += s;
+  stats.maxScore += m;
+  stats.total += t;
+  stats.correct += c;
+  if (s > stats.bestScore) stats.bestScore = s;
+  const pct = Math.round(s / Math.max(m, 1) * 100);
+  if (pct > stats.bestPct) stats.bestPct = pct;
+  saveStats(stats);
+}
+function renderStats() {
+  const s = getStats();
+  const grid = $('stats-grid');
+  const pct = s.maxScore ? Math.round(s.score / s.maxScore * 100) : 0;
+  grid.innerHTML = [
+    { val: s.games, lbl: 'Games' },
+    { val: s.score, lbl: 'Total Points' },
+    { val: pct + '%', lbl: 'Accuracy' },
+    { val: s.bestScore, lbl: 'Best Game' },
+    { val: s.bestPct + '%', lbl: 'Best %' },
+    { val: s.total, lbl: 'Questions' },
+  ].map(st => '<div class="stat-card"><div class="val">' + st.val + '</div><div class="lbl">' + st.lbl + '</div></div>').join('');
+}
+$('btn-stats').addEventListener('click', () => { renderStats(); $('stats-modal').classList.remove('hidden'); });
+$('stats-close').addEventListener('click', () => $('stats-modal').classList.add('hidden'));
+$('stats-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.target.classList.add('hidden'); });
+$('stats-reset').addEventListener('click', () => {
+  if (confirm('Really reset statistics?')) {
+    saveStats({ games:0, score:0, maxScore:0, correct:0, total:0, bestScore:0, bestPct:0 });
+    renderStats();
+  }
+});
+
+// Record game on results (patch showResults)
+const origShowResults = showResults;
+showResults = function() {
+  origShowResults.call(this);
+  recordGame(score, maxPossible, round, correctCount);
+};
+
+loadSettings();
+</script>
+</body>
+</html>
