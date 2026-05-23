@@ -1,5 +1,3 @@
-==================== README.md ====================
-
 # MusicQuizzles 🎵
 
 A fun music guessing game powered by the **Deezer API**. Listen to song previews and test your music knowledge across multiple game modes.
