@@ -48,7 +48,7 @@ Persisted in localStorage: total games, points, accuracy, best scores
 
 ### Installation
 ```bash
-git clone https://github.com/YOUR_USER/MusicQuizzles.git
+https://github.com/PlesendYT/MusicQuizzles.git
 cd MusicQuizzles
 ```
 
